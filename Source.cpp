@@ -259,16 +259,23 @@ void decartArr(int** arr, int** arr_2, int rows, int rows_2) { // декартово прои
         for (int j = 0; j < decart_rows; j++) {
             arr_decart[i][j] = 0;
         }
-    }   
+    }  
+	int u = 0, v = 0;
     for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < rows; j++) {
+        for (int j = 0; j < rows_2; j++) {
             for (int k = 0; k < rows; k++) {
-                for (int l = 0; l < rows; l++) {
-                    int u = i * rows_2 + j;
-                    int v = k * rows_2 + l;
-                    if (i < rows && k < rows && j < rows_2 && l < rows_2) {
-                        arr_decart[u][v] = arr[i][k] && arr_2[j][l]; // Создаем ребро в G, если есть рёбра в G1 и G2
-                    } 
+                for (int l = 0; l < rows_2; l++) {
+                    u = i * rows_2 + j;
+                    v = k * rows_2 + l;
+                    if (j == l) {
+                        arr_decart[u][v] = arr[i][k]; // Создаем ребро в G, если есть рёбра в G1 и G2
+                    }
+					if (i == k) {
+						arr_decart[u][v] = arr_2[j][l];
+					}
+					if (i != k && j != l) {
+						arr_decart[u][v] = 0;
+					}
                 }
             }
         }
