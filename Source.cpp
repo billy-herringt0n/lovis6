@@ -24,8 +24,8 @@ void addSp(Node** arr_sp, int** arr, int rows) {
 
 void printSp(Node** arr_sp, int rows) {
     for (int i = 0; i < rows; i++) {
-        printf("Вершина %d смежна с: ", i + 1);
         Node* current = arr_sp[i];
+        printf("Вершина %d смежна с: ", i + 1);
         while (current != NULL) {
             printf("%d ", current->inf);
             current = current->next;
@@ -43,130 +43,97 @@ void freeList(Node* head) {
     }
 }
 
-void mergeRowsSp(Node** arr_sp, int rows, int rows1, int rows2) {
-    if (rows1 >= rows || rows2 >= rows || rows1 < 0 || rows2 < 0) {
+void mergeRows(int** arr, int* rows, int rows1, int rows2, Node** arr_sp) {
+    // Проверка
+    if (rows1 >= *rows || rows2 >= *rows || rows1 < 0 || rows2 < 0) {
         printf("Ошибка: некорректные номера вершин!\n");
         return;
     }
-    Node* current = arr_sp[rows2];
-    while (current != NULL) {
-        int temp = current->inf;
-        if (temp != rows1+1) {
-            Node* check = arr_sp[rows1];
-            bool found = false;
-            while (check != NULL) {
-                if (check->inf == temp) {
-                    found = true;
-                    break;
-                }
-                check = check->next;
-            }
-            if (!found) {
-                Node* newNode = (Node*)malloc(sizeof(Node));
-                newNode->inf = temp;
-                newNode->next = arr_sp[rows1];
-                arr_sp[rows1] = newNode;
-            }
-        }
-        current = current->next;
+
+    // Отождествляем вершины путем присвоения им одного и того же значения
+    for (int i = 0; i < *rows; i++) {
+        arr[i][rows1] = arr[i][rows1] || arr[i][rows2];
     }
-    // Удаление вершины rows2 из списков смежности
-    freeList(arr_sp[rows2]);
-    arr_sp[rows2] = NULL;
+    for (int i = 0; i < *rows; i++) {
+        arr[rows1][i] = arr[rows1][i] || arr[rows2][i];
+    }
+
+    // Сдвигаем вершины справа от rows2 на одну позицию влево
+    for (int i = 0; i < *rows - 1; i++) {
+        for (int j = rows2; j < *rows - 1; j++) {
+            arr[i][j] = arr[i][j + 1];
+        }
+    }
+
+    for (int i = rows2; i < *rows - 1; i++) {
+        for (int j = 0; j < *rows - 1; j++) {
+            arr[i][j] = arr[i + 1][j];
+        }
+    }
+
+    // Уменьшаем количество вершин на 1
+    (*rows)--;
+    for (int i = 0; i < *rows+1; i++) {
+        freeList(arr_sp[i]);
+        arr_sp[i] = NULL;
+    }
+    addSp(arr_sp, arr, *rows);
 }
 
-void deleteSp(Node** arr_sp, int rows, int rows1) {
-    
-}
-
-void contractEdgeSp(Node** arr_sp, int rows, int rows1, int rows2) {
-    if (rows1 >= rows || rows2 >= rows || rows1 < 0 || rows2 < 0) {
-        printf("Ошибка: некорректные номера вершин!\n");
-        return;
-    }
-    int k = 0;
-    Node* current = arr_sp[rows2];
-    while (current != NULL) {
-        if (current->inf == rows1+1) {
-            k++;
-        }
-        current = current->next;
-    }
-    if (k == 0) {
-        printf("Введите вершины между которыми есть ребро!\n");
-        return;
-    }
-    Node* current_2 = arr_sp[rows2];
-    while (current_2 != NULL) {
-        int temp = current_2->inf;
-        if (temp != rows1+1) {
-            Node* newNode = (Node*)malloc(sizeof(Node));
-            newNode->inf = temp;
-            newNode->next = arr_sp[rows1];
-            arr_sp[rows1] = newNode;
-        }
-        current_2 = current_2->next;
-    }
-    // Удаление вершины rows2 из списков смежности
-    freeList(arr_sp[rows2]);
-    arr_sp[rows2] = NULL;
-}
-
-void mergeRows(int** arr, int rows, int rows1, int rows2) {
-    // Отождествление вершин
-    if (rows1 >= rows || rows2 >= rows || rows1 < 0 || rows2 < 0) {
-        printf("Ошибка: некорректные номера вершин!\n");
-        return;
-    }
-    for (int i = 0; i < rows; i++) {
-        if (i != rows1 && arr[rows2][i] == 1) {
-            arr[rows1][i] = 1;
-            arr[i][rows1] = 1;
-        }
-    }
-    for (int i = 0; i < rows; i++) {
-        if (i == rows1 && arr[rows2][i] == 1) {
-            arr[rows1][i] = 1;
-        }
-        arr[i][rows2] = 0;
-        arr[rows2][i] = 0;
-    }
-}
-
-void contractEdge(int** arr, int rows, int rows1, int rows2) {
+void contractEdge(int** arr, int* rows, int rows1, int rows2, Node** arr_sp) {
     // Стягивание ребра
-    if (rows1 >= rows || rows2 >= rows || rows1 < 0 || rows2 < 0) {
+    if (rows1 >= *rows || rows2 >= *rows || rows1 < 0 || rows2 < 0) {
         printf("Ошибка: некорректные номера вершин!\n");
         return;
     }
-    for (int i = 0; i < rows; i++) {
-        if (i != rows1 && i != rows2) {
-            arr[rows1][i] = arr[rows1][i] || arr[rows2][i];
-            arr[i][rows1] = arr[rows1][i];
+    if (arr[rows1][rows2] == 0) {
+        printf("Между вершинами должно быть ребро!\n");
+        return;
+    }
+    // Отождествляем вершины путем присвоения им одного и того же значения
+    for (int i = 0; i < *rows; i++) {
+        arr[i][rows1] = arr[i][rows1] || arr[i][rows2];
+    }
+    for (int i = 0; i < *rows; i++) {
+        arr[rows1][i] = arr[rows1][i] || arr[rows2][i];
+    }
+    arr[rows1][rows1] = 0;
+    // Сдвигаем вершины справа от vertex2 на одну позицию влево
+    for (int i = 0; i < *rows - 1; i++) {
+        for (int j = rows2; j < *rows - 1; j++) {
+            arr[i][j] = arr[i][j + 1];
         }
     }
-    
-    for (int i = 0; i < rows; i++) {
-        arr[i][rows2] = 0;
-        arr[rows2][i] = 0;
+
+    for (int i = rows2; i < *rows - 1; i++) {
+        for (int j = 0; j < *rows; j++) {
+            arr[i][j] = arr[i + 1][j];
+        }
     }
+    // Уменьшаем количество вершин на 1
+    (*rows)--;
+    for (int i = 0; i < *rows + 1; i++) {
+        freeList(arr_sp[i]);
+        arr_sp[i] = NULL;
+    }
+    addSp(arr_sp, arr, *rows);
 }
 
-void deleteRows(int** arr, int rows, int rows1, Node** arr_sp) {
+void deleteRows(int** arr, int* rows, int rows1, Node** arr_sp) {
     // расщепление вершины
-    int new_rows = rows + 1;
+    int new_rows = *rows + 1;
     int** arr_split = (int**)malloc(new_rows * sizeof(int*));
     for (int i = 0; i < new_rows; i++) {
         arr_split[i] = (int*)malloc(new_rows * sizeof(int));
 
         for (int j = 0; j < new_rows; j++) {
-            if (i < rows && j < rows) {
+            if (i < *rows && j < *rows) {
                 arr_split[i][j] = arr[i][j];  // копируем связи исходной матрицы
             }
-            else if (i == rows && j < rows) {
+            else if (i == *rows && j < *rows) {
                 arr_split[i][j] = arr[rows1][j];  // новая вершина соединена со смежными вершинами выбранной вершины
             }
-            else if (i < rows && j == rows) {
+            else if (i < *rows && j == *rows) {
                 arr_split[i][j] = arr[i][rows1];  // смежные вершины соединены с новой вершиной
             }
             else {
@@ -174,18 +141,39 @@ void deleteRows(int** arr, int rows, int rows1, Node** arr_sp) {
             }
         }
     }
+
+    (*rows)++;
+    arr = (int**)malloc(*rows * sizeof(int*));
+    for (int i = 0; i < *rows; i++) {
+        arr[i] = (int*)malloc(*rows * sizeof(int));
+    }
+    for (int i = 0; i < *rows; i++) {
+        for (int j = 0; j < *rows; j++) {
+            arr[i][j] = arr_split[i][j];
+        }
+    }
+
     printf("Результат расщепления вершины:\n");
-    for (int i = 0; i < new_rows; i++) {
-        for (int j = 0; j < new_rows; j++) {
-            printf("%-2d ", arr_split[i][j]);
+    for (int i = 0; i < *rows; i++) {
+        for (int j = 0; j < *rows; j++) {
+            printf("%-2d ", arr[i][j]);
         }
         printf("\n");
     }
-    for (int i = 0; i < rows; i++) {
+    for (int i = 0; i < *rows - 1; i++) {
         freeList(arr_sp[i]);
         arr_sp[i] = NULL;
     }
-    addSp(arr_sp, arr_split, new_rows);
+    arr_sp = (Node**)malloc((*rows) * sizeof(Node*));
+    if (arr_sp == NULL) {
+        printf("Не удалось выделить память!\n");
+        return;
+    }
+    for (int i = 0; i < *rows; i++) {
+        arr_sp[i] = NULL;
+    }
+    addSp(arr_sp, arr, *rows);
+    printSp(arr_sp, *rows);
 }
 
 void combineArr(int** arr, int** arr_2, int rows, int rows_2) { // обьединение графов
@@ -237,13 +225,18 @@ void sumArr(int** arr, int** arr_2, int rows, int rows_2) { // кольцевая сумма
         arr_ring_sum[i] = (int*)malloc(max_rows * sizeof(int));
 
         for (int j = 0; j < max_rows; j++) {
-            if (i == j) {
-                arr_ring_sum[i][j] = 0;
+            if (i < rows && i < rows_2 && j < rows && j < rows_2) {
+                if (i==j || (arr[i][j] == 1 && arr_2[i][j] == 1)) {
+                    arr_ring_sum[i][j] = 0;
+                }
+                else {
+                    int val_1 = (i < rows&& j < rows) ? arr[i][j] : 0;
+                    int val_2 = (i < rows_2&& j < rows_2) ? arr_2[i][j] : 0;
+                    arr_ring_sum[i][j] = val_1 || val_2;
+                }
             }
             else {
-                int val_1 = (i < rows && j < rows) ? arr[i][j] : 0;
-                int val_2 = (i < rows_2 && j < rows_2) ? arr_2[i][j] : 0;
-                arr_ring_sum[i][j] = val_1 || val_2;
+                arr_ring_sum[i][j] = 0;
             }
         }
     }
@@ -260,26 +253,28 @@ void decartArr(int** arr, int** arr_2, int rows, int rows_2) { // декартово прои
     int decart_rows = rows * rows_2;
     int decart_cols = rows * rows_2;
 
-    int** arr_decart = (int**)malloc(decart_rows * sizeof(int*));
+    int** arr_decart = (int**)malloc(decart_rows * sizeof(int*)); // Результирующий граф G
     for (int i = 0; i < decart_rows; i++) {
         arr_decart[i] = (int*)malloc(decart_cols * sizeof(int));
-
-        for (int j = 0; j < decart_cols; j++) {
-            int u = i / rows;  // вершина из G1
-            int v = j / rows_2;  // вершина из G2
-            int u_temp = i % rows;  // сосед из G1
-            int v_temp = j % rows_2;  // сосед из G2
-
-            // Если вершины u и v соединены в G1 и вершины u_temp и v_temp соединены в G2,
-            // устанавливаем соответствующее ребро в G
-            if (arr[u_temp][u] == 1 && arr_2[v_temp][v] == 1) {
-                arr_decart[i][j] = 1;
-            }
-            else {
-                arr_decart[i][j] = 0;
+        for (int j = 0; j < decart_rows; j++) {
+            arr_decart[i][j] = 0;
+        }
+    }   
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < rows; j++) {
+            for (int k = 0; k < rows; k++) {
+                for (int l = 0; l < rows; l++) {
+                    int u = i * rows_2 + j;
+                    int v = k * rows_2 + l;
+                    if (i < rows && k < rows && j < rows_2 && l < rows_2) {
+                        arr_decart[u][v] = arr[i][k] && arr_2[j][l]; // Создаем ребро в G, если есть рёбра в G1 и G2
+                    } 
+                }
             }
         }
     }
+
+    // Вывод результата на экран
     printf("Результат декартового произведения графов:\n");
     for (int i = 0; i < decart_rows; i++) {
         for (int j = 0; j < decart_cols; j++) {
@@ -409,15 +404,13 @@ void main() {
                 scanf("%d", &rows1);
                 printf("Введите 2 вершину, которую хотите отождествить: ");
                 scanf("%d", &rows2);
-                mergeRows(arr, rows, rows1 - 1, rows2 - 1);
-                printf("Вершины %d и %d успешно отождествлены.\n", rows1, rows2);
+                mergeRows(arr, &rows, rows1 - 1, rows2 - 1, arr_sp);
                 for (i = 0; i < rows; i++) {
                     for (j = 0; j < rows; j++) {
                         printf("%-2d ", arr[i][j]);
                     }
                     printf("\n");
                 }
-                mergeRowsSp(arr_sp, rows, rows1 - 1, rows2 - 1);
                 printSp(arr_sp, rows);
             }
             else if (what == 2) {
@@ -425,15 +418,13 @@ void main() {
                 scanf("%d", &rows1);
                 printf("Введите 2 вершину, которую хотите отождествить: ");
                 scanf("%d", &rows2);
-                mergeRows(arr_2, rows_2, rows1 - 1, rows2 - 1);
-                printf("Вершины %d и %d успешно отождествлены.\n", rows1, rows2);
+                mergeRows(arr_2, &rows_2, rows1 - 1, rows2 - 1, arr_sp_2);
                 for (i = 0; i < rows_2; i++) {
                     for (j = 0; j < rows_2; j++) {
                         printf("%-2d ", arr_2[i][j]);
                     }
                     printf("\n");
                 }
-                mergeRowsSp(arr_sp_2, rows_2, rows1 - 1, rows2 - 1);
                 printSp(arr_sp_2, rows_2);
             }
             else {
@@ -449,15 +440,13 @@ void main() {
                 scanf("%d", &rows1);
                 printf("Введите 2 вершину, между которыми нужно стянуть ребро: ");
                 scanf("%d", &rows2);
-                contractEdge(arr, rows, rows1 - 1, rows2 - 1);
-                printf("Ребро между вершинами %d и %d успешно стянуто.\n", rows1, rows2);
+                contractEdge(arr, &rows, rows1 - 1, rows2 - 1, arr_sp);
                 for (i = 0; i < rows; i++) {
                     for (j = 0; j < rows; j++) {
                         printf("%-2d ", arr[i][j]);
                     }
                     printf("\n");
                 }
-                contractEdgeSp(arr_sp, rows, rows1 - 1, rows2 - 1);
                 printSp(arr_sp, rows);
             }
             else if (what == 2) {
@@ -465,15 +454,13 @@ void main() {
                 scanf("%d", &rows1);
                 printf("Введите 2 вершину, между которыми нужно стянуть ребро: ");
                 scanf("%d", &rows2);
-                contractEdge(arr_2, rows_2, rows1 - 1, rows2 - 1);
-                printf("Ребро между вершинами %d и %d успешно стянуто.\n", rows1, rows2);
+                contractEdge(arr_2, &rows_2, rows1 - 1, rows2 - 1, arr_sp_2);
                 for (i = 0; i < rows_2; i++) {
                     for (j = 0; j < rows_2; j++) {
                         printf("%-2d ", arr_2[i][j]);
                     }
                     printf("\n");
                 }
-                contractEdgeSp(arr_sp_2, rows_2, rows1 - 1, rows2 - 1);
                 printSp(arr_sp_2, rows_2);
             }
             else {
@@ -482,36 +469,17 @@ void main() {
             }
             break;
         case 3:
-
             printf("Выберите в каком массиве хотите это сделать (1 или 2): ");
             scanf("%d", &what);
             if (what == 1) {
                 printf("Введите вершину, которую хотите расщипить: ");
                 scanf("%d", &rows1);
-                arr_sp = (Node**)malloc((rows+1) * sizeof(Node*));
-                if (arr_sp == NULL) {
-                    printf("Не удалось выделить память!\n");
-                    return;
-                }
-                for (i = 0; i < rows + 1; i++) {
-                    arr_sp[i] = NULL;
-                }
-                deleteRows(arr, rows, rows1 - 1, arr_sp);
-                printSp(arr_sp, rows+1);
+                deleteRows(arr, &rows, rows1 - 1, arr_sp);
             }
             else if (what == 2) {
                 printf("Введите вершину, которую хотите расщипить: ");
                 scanf("%d", &rows1);
-                arr_sp_2 = (Node**)malloc((rows_2+1) * sizeof(Node*));
-                if (arr_sp_2 == NULL) {
-                    printf("Не удалось выделить память!\n");
-                    return;
-                }
-                for (i = 0; i < rows_2+1; i++) {
-                    arr_sp_2[i] = NULL;
-                }
-                deleteRows(arr_2, rows_2, rows1 - 1, arr_sp_2);
-                printSp(arr_sp, rows_2+1);
+                deleteRows(arr_2, &rows_2, rows1 - 1, arr_sp_2);
             }
             else {
                 printf("Некорректный выбор!\n");
@@ -541,13 +509,13 @@ void main() {
             printSp(arr_sp, rows);
             printf("Матрица смежности для графа №2:\n");
             // выводить матрицу смежности на экран
-            for (i = 0; i < rows; i++) {
-                for (j = 0; j < rows; j++) {
+            for (i = 0; i < rows_2; i++) {
+                for (j = 0; j < rows_2; j++) {
                     printf("%-2d ", arr_2[i][j]);
                 }
                 printf("\n");
             }
-            printSp(arr_sp_2, rows);
+            printSp(arr_sp_2, rows_2);
             break;
         case 9:
             system("cls");
@@ -558,15 +526,4 @@ void main() {
             break;
         }
     } while (choice != 9);
-
-    // Освобождение памяти
-    for (i = 0; i < rows; i++) {
-        free(arr[i]);
-    }
-    free(arr);
-
-    for (i = 0; i < rows_2; i++) {
-        free(arr_2[i]);
-    }
-    free(arr_2);
 }

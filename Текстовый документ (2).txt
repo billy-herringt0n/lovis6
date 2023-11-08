@@ -1,0 +1,245 @@
+
+typedef struct Node {
+    int inf;
+    struct Node* next;
+}Node;
+
+void addSp(Node** arr_sp, int** arr, int rows) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < rows; j++) {
+            if (arr[i][j] == 1) {
+                Node* newNode = (Node*)malloc(sizeof(Node));
+                newNode->inf = j + 1;
+                newNode->next = arr_sp[i];
+                arr_sp[i] = newNode;
+            }
+        }
+    }
+}
+
+void printSp(Node** arr_sp, int rows) {
+    for (int i = 0; i < rows; i++) {
+        Node* current = arr_sp[i];
+        if (current == NULL) {
+
+        }
+        else {
+            printf("Вершина %d смежна с: ", i + 1);
+            while (current != NULL) {
+                printf("%d ", current->inf);
+                current = current->next;
+            }
+            printf("\n");
+        }
+    }
+}
+
+void freeList(Node* head) {
+    Node* current = head;
+    while (current != NULL) {
+        Node* temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
+
+void mergeRows(int** arr, int* rows, int rows1, int rows2) {
+    // Проверка
+    if (rows1 >= *rows || rows2 >= *rows || rows1 < 0 || rows2 < 0) {
+        printf("Ошибка: некорректные номера вершин!\n");
+        return;
+    }
+
+    
+    // Уменьшаем количество вершин на 1
+    (*rows)--;
+}
+
+void main() {
+
+    setlocale(LC_ALL, "RUS");
+    srand(time(NULL));
+    int** arr = 0; // матрица смежности
+    int** arr_2 = 0; // матрица смежности 2
+    int i, j, rows, rows_2, k, unit = 0;
+    printf("Введите количество вершин графа: ");
+    scanf("%d", &rows);
+    printf("Введите количество вершин графа: ");
+    scanf("%d", &rows_2);
+    Node** arr_sp = NULL;
+    Node** arr_sp_2 = NULL;
+    // Выделение памяти для массива списков смежности
+    arr_sp = (Node**)malloc(rows * sizeof(Node*));
+    if (arr_sp == NULL) {
+        printf("Не удалось выделить память!\n");
+        return;
+    }
+    for (i = 0; i < rows; i++) {
+        arr_sp[i] = NULL;
+    }
+    arr_sp_2 = (Node**)malloc(rows_2 * sizeof(Node*));
+    if (arr_sp_2 == NULL) {
+        printf("Не удалось выделить память!\n");
+        return;
+    }
+    for (i = 0; i < rows_2; i++) {
+        arr_sp_2[i] = NULL;
+    }
+    arr = (int**)malloc(rows * sizeof(int*));
+    if (arr == NULL) {
+        printf("Не удалось выделить память!\n");
+        return;
+    }
+    for (i = 0; i < rows; i++) {
+        arr[i] = (int*)malloc(rows * sizeof(int));
+    }
+    // генерировать случайные значения для матрицы смежности
+    for (i = 0; i < rows; i++) {
+        for (j = i; j < rows; j++) {
+            if (i == j) {
+                arr[i][j] = 0; // на главной диагонали нули
+            }
+            else {
+                arr[i][j] = rand() % 2; // случайные значения 0 или 1
+                arr[j][i] = arr[i][j]; // симметрично заполнять значения для неориентированного графа
+            }
+        }
+    }
+
+    // выводить матрицу смежности на экран
+    printf("Матрица смежности для графа №1:\n");
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < rows; j++) {
+            printf("%-2d ", arr[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("Списки смежности для графа №1:\n");
+    addSp(arr_sp, arr, rows);
+    printSp(arr_sp, rows);
+
+    arr_2 = (int**)malloc(rows_2 * sizeof(int*));
+    if (arr_2 == NULL) {
+        printf("Не удалось выделить память!\n");
+        return;
+    }
+    for (i = 0; i < rows_2; i++) {
+        arr_2[i] = (int*)malloc(rows_2 * sizeof(int));
+    }
+
+    // генерировать случайные значения для матрицы смежности 2
+    for (i = 0; i < rows_2; i++) {
+        for (j = i; j < rows_2; j++) {
+            if (i == j) {
+                arr_2[i][j] = 0; // на главной диагонали нули
+            }
+            else {
+                arr_2[i][j] = rand() % 2; // случайные значения 0 или 1
+                arr_2[j][i] = arr_2[i][j]; // симметрично заполнять значения для неориентированного графа
+            }
+        }
+    }
+
+    printf("Матрица смежности для графа №2:\n");
+    // выводить матрицу смежности на экран
+    for (i = 0; i < rows_2; i++) {
+        for (j = 0; j < rows_2; j++) {
+            printf("%-2d ", arr_2[i][j]);
+        }
+        printf("\n");
+    }
+    printf("Списки смежности для графа №2:\n");
+    addSp(arr_sp_2, arr_2, rows_2);
+    printSp(arr_sp_2, rows_2);
+
+    int choice, rows1, rows2, what;
+    do {
+        printf("1. Отождествить вершины\n");
+        printf("2. Стянуть ребро\n");
+        printf("3. Расщипить вершину\n");
+        printf("4. Обьеденить графы\n");
+        printf("5. Выполнить операцию пересечения графов\n");
+        printf("6. Найти кольцевую сумму\n");
+        printf("7. Найти декартово произведение\n");
+        printf("8. Просмотреть массивы\n");
+        printf("9. Выход\n");
+        printf("Выберите действие: ");
+        scanf("%d", &choice);
+        switch (choice) {
+        case 1:
+            printf("Выберите в каком массиве хотите это сделать (1 или 2): ");
+            scanf("%d", &what);
+            if (what == 1) {
+                printf("Введите 1 вершину, которую хотите отождествить: ");
+                scanf("%d", &rows1);
+                printf("Введите 2 вершину, которую хотите отождествить: ");
+                scanf("%d", &rows2);
+                mergeRows(arr, &rows, rows1 - 1, rows2 - 1);
+                for (i = 0; i < rows; i++) {
+                    for (j = 0; j < rows; j++) {
+                        printf("%-2d ", arr[i][j]);
+                    }
+                    printf("\n");
+                }
+                printSp(arr_sp, rows);
+            }
+            else if (what == 2) {
+                printf("Введите 1 вершину, которую хотите отождествить: ");
+                scanf("%d", &rows1);
+                printf("Введите 2 вершину, которую хотите отождествить: ");
+                scanf("%d", &rows2);
+                mergeRows(arr_2, &rows_2, rows1 - 1, rows2 - 1);
+                for (i = 0; i < rows_2; i++) {
+                    for (j = 0; j < rows_2; j++) {
+                        printf("%-2d ", arr_2[i][j]);
+                    }
+                    printf("\n");
+                }
+                printSp(arr_sp_2, rows_2);
+            }
+            else {
+                printf("Некорректный выбор!\n");
+                break;
+            }
+            break;
+        case 2:
+            break;
+        case 3:
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            printf("Матрица смежности для графа №1:\n");
+            for (i = 0; i < rows; i++) {
+                for (j = 0; j < rows; j++) {
+                    printf("%-2d ", arr[i][j]);
+                }
+                printf("\n");
+            }
+            printSp(arr_sp, rows);
+            printf("Матрица смежности для графа №2:\n");
+            // выводить матрицу смежности на экран
+            for (i = 0; i < rows_2; i++) {
+                for (j = 0; j < rows_2; j++) {
+                    printf("%-2d ", arr_2[i][j]);
+                }
+                printf("\n");
+            }
+            printSp(arr_sp_2, rows);
+            break;
+        case 9:
+            system("cls");
+            printf("До свидания!\n");
+            break;
+        default:
+            printf("Некорректный выбор!\n");
+            break;
+        }
+    } while (choice != 9);
+}
